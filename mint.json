@@ -19,17 +19,17 @@
     {
       "name": "Public API Reference",
       "openapi": "/api-reference/public_openapi.yaml",
-      "url": "public-api-reference"
+      "url": "public"
     },
     {
       "name": "User API Reference",
       "openapi": "/api-reference/user_openapi.yaml",
-      "url": "user-api-reference"
+      "url": "protected"
     },
     {
       "name": "Admin API Reference",
       "openapi": "/api-reference/admin_openapi.yaml",
-      "url": "admin-api-reference"
+      "url": "admin"
     }
   ],
   "navigation": [
