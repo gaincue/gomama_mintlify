@@ -470,10 +470,10 @@ paths:
             schema:
               type: object
               required:
-                - email
+                - login_account
                 - password
               properties:
-                email:
+                login_account:
                   type: string
                   format: email
                 password:
@@ -512,10 +512,10 @@ paths:
             schema:
               type: object
               required:
-                - mobile_or_email
+                - login_account
                 - otp
               properties:
-                mobile_or_email:
+                login_account:
                   type: string
                 otp:
                   type: string
@@ -620,9 +620,9 @@ paths:
             schema:
               type: object
               required:
-                - mobile_or_email
+                - login_account
               properties:
-                mobile_or_email:
+                login_account:
                   type: string
       responses:
         "200":
@@ -655,10 +655,10 @@ paths:
             schema:
               type: object
               required:
-                - mobile_or_email
+                - register_account
                 - otp
               properties:
-                mobile_or_email:
+                register_account:
                   type: string
                 otp:
                   type: string
