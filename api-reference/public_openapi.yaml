@@ -1,0 +1,839 @@
+openapi: 3.0.0
+info:
+  title: GoMama API
+  version: 1.0.0
+  description: API documentation for the GoMama application
+
+servers:
+  - url: http://localhost:3333/api/v1
+    description: Local development server
+  - url: https://api.gomama.com.sg/api/v1
+    description: Production server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              rule:
+                type: string
+              field:
+                type: string
+              message:
+                type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email_address:
+          type: string
+          format: email
+        mobile_number:
+          type: string
+        country_dial_code:
+          type: string
+        country_code:
+          type: string
+        country_name:
+          type: string
+        username:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        gender:
+          type: string
+          enum: [male, female, other]
+        birthday:
+          type: string
+          format: date
+        children_birthdays:
+          type: array
+          items:
+            type: string
+            format: date
+        company_name:
+          type: string
+        nationality:
+          type: string
+        profile_image_url:
+          type: string
+        is_email_address_verified:
+          type: boolean
+        is_mobile_number_verified:
+          type: boolean
+        favorite_listings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Listing"
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Profile"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        social_type:
+          type: string
+          enum: [SHOPIFY]
+        social_id:
+          type: string
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Listing:
+      type: object
+      properties:
+        id:
+          type: integer
+        firestore_id:
+          type: string
+        name:
+          type: string
+        company_name:
+          type: string
+        contact_number:
+          type: string
+        address_name:
+          type: string
+        full_address:
+          type: string
+        note:
+          type: string
+        description:
+          type: string
+        number_of_private_feeding_rooms:
+          type: integer
+        opening_hours:
+          type: string
+        listing_type:
+          type: string
+          enum: [care, pod]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        postal_code:
+          type: string
+        position:
+          type: object
+          properties:
+            coordinate:
+              type: object
+              properties:
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+        listing_files:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              image_url:
+                type: string
+              is_main:
+                type: boolean
+        amenities:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              slug:
+                type: string
+              font_icon_name:
+                type: string
+        average_experience_ratings:
+          type: number
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AppVersionControl:
+      type: object
+      properties:
+        id:
+          type: integer
+        version:
+          type: string
+        platform:
+          type: string
+          enum: [ios, android]
+        is_force_update:
+          type: boolean
+        is_mandatory_update:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ShopifyOrder:
+      type: object
+      properties:
+        id:
+          type: string
+        order_number:
+          type: string
+        total_price:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        financial_status:
+          type: string
+        fulfillment_status:
+          type: string
+        line_items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+              quantity:
+                type: integer
+              price:
+                type: string
+
+    ReviewRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        order_id:
+          type: string
+        user_id:
+          type: integer
+        listing_id:
+          type: integer
+        status:
+          type: string
+          enum: [pending, completed]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CoinBalance:
+      type: object
+      properties:
+        balance:
+          type: integer
+        total_earned:
+          type: integer
+        total_redeemed:
+          type: integer
+        last_check_in:
+          type: string
+          format: date-time
+
+    Position:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        coordinate:
+          type: object
+          properties:
+            latitude:
+              type: number
+            longitude:
+              type: number
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListingFlag:
+      type: object
+      properties:
+        id:
+          type: integer
+        listing_id:
+          type: integer
+        user_id:
+          type: integer
+        reason:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, resolved]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListingRating:
+      type: object
+      properties:
+        id:
+          type: integer
+        listing_id:
+          type: integer
+        user_id:
+          type: integer
+        experience_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        font_icon_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Amenity:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        font_icon_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Region:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        listing_id:
+          type: integer
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+        pin_code:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+paths:
+  /users/search-username/{username}:
+    get:
+      summary: Search for a user by username
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+          description: Username to search for
+      responses:
+        "200":
+          description: Successfully found user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /login:
+    post:
+      summary: Login with email/password
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        "200":
+          description: Successfully logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  token:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /login-otp:
+    post:
+      summary: Login with OTP
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - mobile_or_email
+                - otp
+              properties:
+                mobile_or_email:
+                  type: string
+                otp:
+                  type: string
+      responses:
+        "200":
+          description: Successfully logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  token:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        "401":
+          description: Invalid OTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users:
+    post:
+      summary: Register a new user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email_address
+                - password
+                - username
+                - first_name
+                - last_name
+              properties:
+                email_address:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                username:
+                  type: string
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                gender:
+                  type: string
+                  enum: [male, female, other]
+                birthday:
+                  type: string
+                  format: date
+                children_birthdays:
+                  type: array
+                  items:
+                    type: string
+                    format: date
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  token:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        "409":
+          description: Email/username already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /otp/register-or-login:
+    post:
+      summary: Request OTP for registration or login
+      tags:
+        - OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - mobile_or_email
+              properties:
+                mobile_or_email:
+                  type: string
+      responses:
+        "200":
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /otp/verify-registration-otp:
+    post:
+      summary: Verify registration OTP
+      tags:
+        - OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - mobile_or_email
+                - otp
+              properties:
+                mobile_or_email:
+                  type: string
+                otp:
+                  type: string
+      responses:
+        "200":
+          description: OTP verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "401":
+          description: Invalid OTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /app-version-controls/latest:
+    get:
+      summary: Get latest app version information
+      tags:
+        - App Version Control
+      responses:
+        "200":
+          description: Successfully retrieved latest version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppVersionControl"
+
+  /oauth/google:
+    post:
+      summary: Login with Google
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id_token
+              properties:
+                id_token:
+                  type: string
+      responses:
+        "200":
+          description: Successfully logged in with Google
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  token:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /oauth/facebook:
+    post:
+      summary: Login with Facebook
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - access_token
+              properties:
+                access_token:
+                  type: string
+      responses:
+        "200":
+          description: Successfully logged in with Facebook
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  token:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /oauth/apple:
+    post:
+      summary: Login with Apple
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id_token
+              properties:
+                id_token:
+                  type: string
+      responses:
+        "200":
+          description: Successfully logged in with Apple
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  token:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /listing-files/{id}:
+    get:
+      summary: Get a specific listing file
+      tags:
+        - Listing Files
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the listing file
+      responses:
+        "200":
+          description: Successfully retrieved listing file
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  image_url:
+                    type: string
+                  is_main:
+                    type: boolean
+        "404":
+          description: Listing file not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"

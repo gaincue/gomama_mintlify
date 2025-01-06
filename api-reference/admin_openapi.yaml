@@ -1,0 +1,2683 @@
+openapi: 3.0.0
+info:
+  title: GoMama Admin API
+  version: 1.0.0
+  description: Admin API endpoints for GoMama platform
+
+servers:
+  - url: http://localhost:3333/api/v1/admin
+    description: Local development server
+  - url: https://api.gomama.com.sg/api/v1/admin
+    description: Production server
+
+components:
+  securitySchemes:
+    adminAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Admin authentication token
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+    AdminLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+    AdminLoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/AdminUser'
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum: [admin, super_admin]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Listing:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [draft, published, archived]
+        images:
+          type: array
+          items:
+            type: string
+        location:
+          type: object
+          properties:
+            latitude:
+              type: number
+            longitude:
+              type: number
+            address:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ListingFlag:
+      type: object
+      properties:
+        id:
+          type: string
+        listing_id:
+          type: string
+        reason:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, reviewed, dismissed]
+        created_at:
+          type: string
+          format: date-time
+    Position:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+    Region:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+    Amenity:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        icon:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+        verification_status:
+          type: string
+          enum: [unverified, pending, verified, rejected]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        status:
+          type: string
+          enum: [active, ended, hidden]
+        pins:
+          type: array
+          items:
+            type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+    AppVersion:
+      type: object
+      properties:
+        id:
+          type: string
+        version:
+          type: string
+        platform:
+          type: string
+          enum: [ios, android]
+        min_version:
+          type: string
+        latest_version:
+          type: string
+        is_published:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+        per_page:
+          type: integer
+        current_page:
+          type: integer
+        last_page:
+          type: integer
+
+paths:
+  /login:
+    post:
+      summary: Admin Login
+      operationId: adminLogin
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+      responses:
+        '200':
+          description: Successfully logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /me:
+    get:
+      summary: Get Current Admin User
+      operationId: findMyself
+      tags:
+        - Admin
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Current admin user details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /me/logout:
+    post:
+      summary: Logout Admin
+      operationId: logoutAdmin
+      tags:
+        - Authentication
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listings:
+    post:
+      summary: Suggest New Listing
+      operationId: suggestListingAdmin
+      tags:
+        - Listings
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Listing'
+      responses:
+        '201':
+          description: Listing created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get All Listings
+      operationId: findListingsAdmin
+      tags:
+        - Listings
+      security:
+        - adminAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of all listings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Listing'
+                  meta:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listings/search-position:
+    get:
+      summary: Search Listings by Position
+      operationId: findListingsByPositionAdmin
+      tags:
+        - Listings
+      security:
+        - adminAuth: []
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: longitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: radius
+          in: query
+          schema:
+            type: number
+            format: float
+            default: 5
+      responses:
+        '200':
+          description: List of listings matching position criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Listing'
+                  meta:
+                    $ref: '#/components/schemas/Pagination'
+        '400':
+          description: Invalid coordinates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listings/search-keywords:
+    get:
+      summary: Search Listings by Keywords
+      operationId: findListingsByKeywordsAdmin
+      tags:
+        - Listings
+      security:
+        - adminAuth: []
+      parameters:
+        - name: keywords
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of listings matching keywords
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Listing'
+                  meta:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listings/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Listing by ID
+      operationId: findListingAdmin
+      tags:
+        - Listings
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Listing details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update Listing
+      operationId: updateListingAdmin
+      tags:
+        - Listings
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Listing'
+      responses:
+        '200':
+          description: Listing updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete Listing
+      operationId: deleteListing
+      tags:
+        - Listings
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Listing deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listings/update-image/{id}:
+    put:
+      summary: Update Listing Image
+      operationId: updateListingImageAdmin
+      tags:
+        - Listings
+      security:
+        - adminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Listing image updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+        '400':
+          description: Invalid image
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listing-flags/{listing_id}:
+    post:
+      summary: Create Listing Flag
+      operationId: createListingFlag
+      tags:
+        - Listing Flags
+      security:
+        - adminAuth: []
+      parameters:
+        - name: listing_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Listing flag created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingFlag'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listing-flags:
+    get:
+      summary: Get All Listing Flags
+      operationId: retrieveAllListingFlagsAdmin
+      tags:
+        - Listing Flags
+      security:
+        - adminAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of all listing flags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ListingFlag'
+                  meta:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listing-flags/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Listing Flag by ID
+      operationId: retrieveListingFlagAdmin
+      tags:
+        - Listing Flags
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Listing flag details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingFlag'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Listing flag not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update Listing Flag
+      operationId: updateListingFlagAdmin
+      tags:
+        - Listing Flags
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [pending, reviewed, dismissed]
+      responses:
+        '200':
+          description: Listing flag updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingFlag'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Listing flag not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete Listing Flag
+      operationId: deleteListingFlag
+      tags:
+        - Listing Flags
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Listing flag deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Listing flag not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /positions:
+    post:
+      summary: Create Position
+      operationId: createPosition
+      tags:
+        - Positions
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  default: active
+      responses:
+        '201':
+          description: Position created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get All Positions
+      operationId: findPositionsAdmin
+      tags:
+        - Positions
+      security:
+        - adminAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of all positions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Position'
+                  meta:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /positions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Position by ID
+      operationId: findPositionAdmin
+      tags:
+        - Positions
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Position details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Position not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update Position
+      operationId: updatePosition
+      tags:
+        - Positions
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [active, inactive]
+      responses:
+        '200':
+          description: Position updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Position not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete Position
+      operationId: deletePosition
+      tags:
+        - Positions
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Position deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Position not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /regions:
+    post:
+      summary: Create Region
+      operationId: createRegion
+      tags:
+        - Regions
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - slug
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+      responses:
+        '201':
+          description: Region created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Region'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get All Regions
+      operationId: findRegionsAdmin
+      tags:
+        - Regions
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: List of all regions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Region'
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /regions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Region by ID
+      operationId: findRegionAdmin
+      tags:
+        - Regions
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Region details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Region'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Region not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /regions/search-slug/{slug}:
+    get:
+      summary: Get Region by Slug
+      operationId: findRegionWithSlugAdmin
+      tags:
+        - Regions
+      security:
+        - adminAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Region details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Region'
+        '404':
+          description: Region not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /regions/slug/{slug}:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Update Region by Slug
+      operationId: updateRegionWithSlug
+      tags:
+        - Regions
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Region updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Region'
+        '404':
+          description: Region not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete Region by Slug
+      operationId: deleteRegionWithSlug
+      tags:
+        - Regions
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Region deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Region not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /activities:
+    post:
+      summary: Create Activity
+      operationId: createActivity
+      tags:
+        - Activities
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - slug
+                - description
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Activity created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get All Activities
+      operationId: findActivitiesAdmin
+      tags:
+        - Activities
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: List of all activities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Activity'
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /activities/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Activity by ID
+      operationId: findActivityAdmin
+      tags:
+        - Activities
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Activity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Activity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /activities/search-slug/{slug}:
+    get:
+      summary: Get Activity by Slug
+      operationId: findActivityWithSlugAdmin
+      tags:
+        - Activities
+      security:
+        - adminAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Activity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '404':
+          description: Activity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /activities/slug/{slug}:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Update Activity by Slug
+      operationId: updateActivityWithSlug
+      tags:
+        - Activities
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Activity updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '404':
+          description: Activity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete Activity by Slug
+      operationId: deleteActivityWithSlug
+      tags:
+        - Activities
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Activity deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Activity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /amenities:
+    post:
+      summary: Create Amenity
+      operationId: createAmenity
+      tags:
+        - Amenities
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - slug
+                - icon
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                icon:
+                  type: string
+      responses:
+        '201':
+          description: Amenity created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Amenity'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get All Amenities
+      operationId: findAmenitiesAdmin
+      tags:
+        - Amenities
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: List of all amenities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Amenity'
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /amenities/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Amenity by ID
+      operationId: findAmenityAdmin
+      tags:
+        - Amenities
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Amenity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Amenity'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Amenity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /amenities/search-slug/{slug}:
+    get:
+      summary: Get Amenity by Slug
+      operationId: findAmenityWithSlugAdmin
+      tags:
+        - Amenities
+      security:
+        - adminAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Amenity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Amenity'
+        '404':
+          description: Amenity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /amenities/slug/{slug}:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Update Amenity by Slug
+      operationId: updateAmenityWithSlug
+      tags:
+        - Amenities
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Amenity updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Amenity'
+        '404':
+          description: Amenity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete Amenity by Slug
+      operationId: deleteAmenityWithSlug
+      tags:
+        - Amenities
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Amenity deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Amenity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users:
+    post:
+      summary: Create User
+      operationId: createUserAdmin
+      tags:
+        - Users
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - username
+                - phone
+              properties:
+                email:
+                  type: string
+                  format: email
+                username:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get All Users
+      operationId: findUsersAdmin
+      tags:
+        - Users
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: List of all users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get User by ID
+      operationId: findUserAdmin
+      tags:
+        - Users
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/search-username/{username}:
+    get:
+      summary: Get User by Username
+      operationId: findUserByUsernameAdmin
+      tags:
+        - Users
+      security:
+        - adminAuth: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/review-verification-request/{id}:
+    post:
+      summary: Review User Verification Request
+      operationId: reviewVerification
+      tags:
+        - Users
+      security:
+        - adminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [approved, rejected]
+      responses:
+        '200':
+          description: Verification request reviewed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/reset-selfie-fail-count/{id}:
+    post:
+      summary: Reset User Selfie Verification Fail Count
+      operationId: resetUserSelfieVerifyFailCount
+      tags:
+        - Users
+      security:
+        - adminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Selfie fail count reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/restore/{id}:
+    put:
+      summary: Restore Soft Deleted User Account
+      operationId: restoreSoftDeleteAccount
+      tags:
+        - Users
+      security:
+        - adminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User account restored successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listing-ratings:
+    post:
+      summary: Create Listing Rating
+      operationId: createListingRating
+      tags:
+        - Listing Ratings
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - listing_id
+                - rating
+              properties:
+                listing_id:
+                  type: string
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+      responses:
+        '201':
+          description: Listing rating created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get All Listing Ratings
+      operationId: findListingRatingsAdmin
+      tags:
+        - Listing Ratings
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: List of all listing ratings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        listing_id:
+                          type: string
+                        rating:
+                          type: integer
+                        created_at:
+                          type: string
+                          format: date-time
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listing-ratings/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Listing Rating by ID
+      operationId: findListingRatingAdmin
+      tags:
+        - Listing Ratings
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Listing rating details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  listing_id:
+                    type: string
+                  rating:
+                    type: integer
+                  created_at:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Listing rating not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sessions:
+    post:
+      summary: Create Session
+      operationId: createSessionAdmin
+      tags:
+        - Sessions
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+              properties:
+                user_id:
+                  type: string
+      responses:
+        '201':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get All Sessions
+      operationId: findSessionsAdmin
+      tags:
+        - Sessions
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: List of all sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sessions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Session by ID
+      operationId: findSessionAdmin
+      tags:
+        - Sessions
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sessions/{id}/pins:
+    put:
+      summary: Update Session Lock Pins
+      operationId: updateSessionLockPins
+      tags:
+        - Sessions
+      security:
+        - adminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - pins
+              properties:
+                pins:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Session lock pins updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sessions/{id}/end:
+    put:
+      summary: End Session
+      operationId: endSessionAdmin
+      tags:
+        - Sessions
+      security:
+        - adminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session ended successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sessions/{id}/hide-unhide-session:
+    put:
+      summary: Hide or Unhide Session
+      operationId: hideNUnhideSessionAdmin
+      tags:
+        - Sessions
+      security:
+        - adminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [hidden, visible]
+      responses:
+        '200':
+          description: Session visibility updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sessions/search-user/{user_id}:
+    get:
+      summary: Get Sessions by User ID
+      operationId: findSessionsByUserIdAdmin
+      tags:
+        - Sessions
+      security:
+        - adminAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of sessions for user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listing-files:
+    get:
+      summary: Get All Listing Files
+      operationId: findListingFilesAdmin
+      tags:
+        - Listing Files
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: List of all listing files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        listing_id:
+                          type: string
+                        file:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listing-files/{id}:
+    get:
+      summary: Get Listing File by ID
+      operationId: findListingFileAdmin
+      tags:
+        - Listing Files
+      security:
+        - adminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Listing file details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  listing_id:
+                    type: string
+                  file:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Listing file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /upload:
+    post:
+      summary: Upload File
+      operationId: upload
+      tags:
+        - Files
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /app-version-controls:
+    post:
+      summary: Create App Version
+      operationId: createVersion
+      tags:
+        - App Version Controls
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - version
+                - platform
+              properties:
+                version:
+                  type: string
+                platform:
+                  type: string
+                  enum: [ios, android]
+      responses:
+        '201':
+          description: App version created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get All App Versions
+      operationId: retrieveVersions
+      tags:
+        - App Version Controls
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: List of all app versions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppVersion'
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /app-version-controls/latest:
+    get:
+      summary: Get Latest Published Version
+      operationId: retrieveLatestPublishedVersion
+      tags:
+        - App Version Controls
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Latest published app version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppVersion'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /app-version-controls/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get App Version by ID
+      operationId: retrieveVersion
+      tags:
+        - App Version Controls
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: App version details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppVersion'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: App version not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /app-version-controls/publish/{id}:
+    put:
+      summary: Publish App Version
+      operationId: publishVersion
+      tags:
+        - App Version Controls
+      security:
+        - adminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: App version published successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /app-version-controls/unpublish/{id}:
+    put:
+      summary: Unpublish App Version
+      operationId: unpublishVersion
+      tags:
+        - App Version Controls
+      security:
+        - adminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: App version unpublished successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

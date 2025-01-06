@@ -1,0 +1,2026 @@
+openapi: 3.0.0
+info:
+  title: GoMama API
+  version: 1.0.0
+  description: API documentation for the GoMama application
+
+servers:
+  - url: http://localhost:3333/api/v1
+    description: Local development server
+  - url: https://api.gomama.com.sg/api/v1
+    description: Production server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              rule:
+                type: string
+              field:
+                type: string
+              message:
+                type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email_address:
+          type: string
+          format: email
+        mobile_number:
+          type: string
+        country_dial_code:
+          type: string
+        country_code:
+          type: string
+        country_name:
+          type: string
+        username:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        gender:
+          type: string
+          enum: [male, female, other]
+        birthday:
+          type: string
+          format: date
+        children_birthdays:
+          type: array
+          items:
+            type: string
+            format: date
+        company_name:
+          type: string
+        nationality:
+          type: string
+        profile_image_url:
+          type: string
+        is_email_address_verified:
+          type: boolean
+        is_mobile_number_verified:
+          type: boolean
+        favorite_listings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Listing"
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Profile"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        social_type:
+          type: string
+          enum: [SHOPIFY]
+        social_id:
+          type: string
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Listing:
+      type: object
+      properties:
+        id:
+          type: integer
+        firestore_id:
+          type: string
+        name:
+          type: string
+        company_name:
+          type: string
+        contact_number:
+          type: string
+        address_name:
+          type: string
+        full_address:
+          type: string
+        note:
+          type: string
+        description:
+          type: string
+        number_of_private_feeding_rooms:
+          type: integer
+        opening_hours:
+          type: string
+        listing_type:
+          type: string
+          enum: [care, pod]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        postal_code:
+          type: string
+        position:
+          type: object
+          properties:
+            coordinate:
+              type: object
+              properties:
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+        listing_files:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              image_url:
+                type: string
+              is_main:
+                type: boolean
+        amenities:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              slug:
+                type: string
+              font_icon_name:
+                type: string
+        average_experience_ratings:
+          type: number
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AppVersionControl:
+      type: object
+      properties:
+        id:
+          type: integer
+        version:
+          type: string
+        platform:
+          type: string
+          enum: [ios, android]
+        is_force_update:
+          type: boolean
+        is_mandatory_update:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ShopifyOrder:
+      type: object
+      properties:
+        id:
+          type: string
+        order_number:
+          type: string
+        total_price:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        financial_status:
+          type: string
+        fulfillment_status:
+          type: string
+        line_items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+              quantity:
+                type: integer
+              price:
+                type: string
+
+    ReviewRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        order_id:
+          type: string
+        user_id:
+          type: integer
+        listing_id:
+          type: integer
+        status:
+          type: string
+          enum: [pending, completed]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CoinBalance:
+      type: object
+      properties:
+        balance:
+          type: integer
+        total_earned:
+          type: integer
+        total_redeemed:
+          type: integer
+        last_check_in:
+          type: string
+          format: date-time
+
+    Position:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        coordinate:
+          type: object
+          properties:
+            latitude:
+              type: number
+            longitude:
+              type: number
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListingFlag:
+      type: object
+      properties:
+        id:
+          type: integer
+        listing_id:
+          type: integer
+        user_id:
+          type: integer
+        reason:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, resolved]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListingRating:
+      type: object
+      properties:
+        id:
+          type: integer
+        listing_id:
+          type: integer
+        user_id:
+          type: integer
+        experience_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        font_icon_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Amenity:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        font_icon_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Region:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        listing_id:
+          type: integer
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+        pin_code:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+paths:
+  /me:
+    get:
+      summary: Get current user information
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved user information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /me/logout:
+    post:
+      summary: Logout current user
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /me/favorite-listings:
+    get:
+      summary: Get user's favorite listings
+      tags:
+        - Users
+        - Listings
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved favorite listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Listing"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      summary: Update user's favorite listing
+      tags:
+        - Users
+        - Listings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - listing_id
+              properties:
+                listing_id:
+                  type: string
+                is_favorite:
+                  type: boolean
+                  default: true
+      responses:
+        "200":
+          description: Successfully updated favorite listing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /listings:
+    get:
+      summary: Get all listings
+      tags:
+        - Listings
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Number of items per page
+        - in: query
+          name: sort
+          schema:
+            type: string
+            default: name:asc
+          description: Sort field and direction (e.g., name:asc, created_at:desc)
+        - in: query
+          name: amenities
+          schema:
+            type: array
+            items:
+              type: string
+          description: Filter by amenities
+          style: form
+          explode: true
+      responses:
+        "200":
+          description: List of listings with pagination
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+                      first_page:
+                        type: integer
+                      first_page_url:
+                        type: string
+                      last_page_url:
+                        type: string
+                      next_page_url:
+                        type: string
+                      previous_page_url:
+                        type: string
+                        nullable: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Listing"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /listings/geojson:
+    get:
+      summary: Get listings in GeoJSON format
+      tags:
+        - Listings
+      responses:
+        "200":
+          description: GeoJSON feature collection of listings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [FeatureCollection]
+                  features:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum: [Feature]
+                        geometry:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                              enum: [Point]
+                            coordinates:
+                              type: array
+                              items:
+                                type: number
+                              minItems: 2
+                              maxItems: 2
+                        properties:
+                          $ref: "#/components/schemas/Listing"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /listings/search-own-suggested:
+    get:
+      summary: Get listings suggested by the authenticated user
+      tags:
+        - Listings
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Number of items per page
+        - in: query
+          name: sort
+          schema:
+            type: string
+            default: created_at:desc
+          description: Sort field and direction (e.g., created_at:desc)
+      responses:
+        "200":
+          description: List of user's suggested listings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Listing"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # /users:
+  #   get:
+  #     summary: Get all users
+  #     tags:
+  #       - Users
+  #     security:
+  #       - bearerAuth: []
+  #     parameters:
+  #       - in: query
+  #         name: page
+  #         schema:
+  #           type: integer
+  #           default: 1
+  #         description: Page number
+  #       - in: query
+  #         name: limit
+  #         schema:
+  #           type: integer
+  #           default: 10
+  #         description: Items per page
+  #     responses:
+  #       "200":
+  #         description: Successfully retrieved users
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 meta:
+  #                   type: object
+  #                   properties:
+  #                     total:
+  #                       type: integer
+  #                     per_page:
+  #                       type: integer
+  #                     current_page:
+  #                       type: integer
+  #                     last_page:
+  #                       type: integer
+  #                 data:
+  #                   type: array
+  #                   items:
+  #                     $ref: "#/components/schemas/User"
+
+  # /users/{id}:
+  #   get:
+  #     summary: Get a specific user
+  #     tags:
+  #       - Users
+  #     security:
+  #       - bearerAuth: []
+  #     parameters:
+  #       - in: path
+  #         name: id
+  #         required: true
+  #         schema:
+  #           type: integer
+  #         description: User ID
+  #     responses:
+  #       "200":
+  #         description: Successfully retrieved user
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/User"
+  #       "404":
+  #         description: User not found
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/Error"
+
+  /otp/update-email-or-phone:
+    post:
+      summary: Request OTP for email or phone update
+      tags:
+        - OTP
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - mobile_or_email
+              properties:
+                mobile_or_email:
+                  type: string
+                  maxLength: 255
+                  minLength: 1
+                  description: New email or phone number to verify
+      responses:
+        "200":
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Bad request (e.g., same as current email/phone)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Email/Phone already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /otp/verify-update-email-or-phone:
+    post:
+      summary: Verify OTP for email or phone update
+      tags:
+        - OTP
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                country_dial_code:
+                  type: string
+                  maxLength: 7
+                  minLength: 1
+                  description: Required if new_mobile_number is provided
+                new_mobile_number:
+                  type: string
+                  maxLength: 20
+                  description: Required if country_dial_code is provided
+                new_email:
+                  type: string
+                  maxLength: 255
+                  minLength: 1
+                  description: Required if not updating phone
+                otp:
+                  type: string
+                  description: The OTP to verify
+      responses:
+        "200":
+          description: OTP verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized or invalid OTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Email/Phone already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /me/gomama-verify:
+    post:
+      summary: Submit GoMama verification
+      tags:
+        - Users
+        - Verification
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                selfie_image:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Successfully submitted verification
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /me/gomama-verify/add-selfie-fail-count:
+    post:
+      summary: Increment selfie verification fail count
+      tags:
+        - Users
+        - Verification
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully incremented fail count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /me/singpass-verify:
+    post:
+      summary: Submit Singpass verification
+      tags:
+        - Users
+        - Verification
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uinfin:
+                  type: string
+      responses:
+        "200":
+          description: Successfully submitted verification
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /me/orders:
+    get:
+      summary: Get user's Shopify orders
+      tags:
+        - Shopify
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShopifyOrder"
+
+  /me/orders/{id}/mark-as-received:
+    put:
+      summary: Mark order as received
+      tags:
+        - Shopify
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Order ID
+      responses:
+        "200":
+          description: Successfully marked order as received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /me/review-requests:
+    get:
+      summary: Get user's review requests
+      tags:
+        - Shopify
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved review requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReviewRequest"
+
+  /me/coins/balance:
+    get:
+      summary: Get user's coin balance
+      tags:
+        - Coins
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved coin balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoinBalance"
+
+  /me/coins/check-in:
+    post:
+      summary: Daily check-in for coins
+      tags:
+        - Coins
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully checked in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/CoinBalance"
+
+  /me/coins/redeem:
+    post:
+      summary: Redeem coins
+      tags:
+        - Coins
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: integer
+                  minimum: 1
+      responses:
+        "200":
+          description: Successfully redeemed coins
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/CoinBalance"
+
+  /me/coins/cancel:
+    post:
+      summary: Cancel coin redemption
+      tags:
+        - Coins
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - redemption_id
+              properties:
+                redemption_id:
+                  type: string
+      responses:
+        "200":
+          description: Successfully cancelled redemption
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/CoinBalance"
+
+  /positions:
+    get:
+      summary: Get all positions
+      tags:
+        - Positions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved positions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Position"
+
+  /positions/{id}:
+    get:
+      summary: Get a specific position
+      tags:
+        - Positions
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Position ID
+      responses:
+        "200":
+          description: Successfully retrieved position
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Position"
+        "404":
+          description: Position not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /singpassV4/myinfo/authorize:
+    get:
+      summary: Initialize Singpass V4 OAuth
+      tags:
+        - Authentication
+        - Singpass
+      security:
+        - bearerAuth: []
+      responses:
+        "302":
+          description: Redirect to Singpass login
+
+  /singpassV4/myinfo/callback:
+    get:
+      summary: Handle Singpass V4 callback
+      tags:
+        - Authentication
+        - Singpass
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: code
+          schema:
+            type: string
+          description: Authorization code
+        - in: query
+          name: state
+          schema:
+            type: string
+          description: State parameter
+      responses:
+        "200":
+          description: Successfully processed callback
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /singpassV3/myinfo/authorize:
+    get:
+      summary: Initialize Singpass V3 OAuth
+      tags:
+        - Authentication
+        - Singpass
+      security:
+        - bearerAuth: []
+      responses:
+        "302":
+          description: Redirect to Singpass login
+
+  /singpassV3/myinfo/process:
+    post:
+      summary: Process Singpass V3 data
+      tags:
+        - Authentication
+        - Singpass
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                state:
+                  type: string
+      responses:
+        "200":
+          description: Successfully processed data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /listings/search-position:
+    get:
+      summary: Search listings by position
+      tags:
+        - Listings
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: latitude
+          required: true
+          schema:
+            type: number
+          description: Latitude coordinate
+        - in: query
+          name: longitude
+          required: true
+          schema:
+            type: number
+          description: Longitude coordinate
+        - in: query
+          name: radius
+          schema:
+            type: number
+            default: 1
+          description: Search radius in kilometers
+      responses:
+        "200":
+          description: Successfully retrieved listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Listing"
+
+  /listings/search-keywords:
+    get:
+      summary: Search listings by keywords
+      tags:
+        - Listings
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+          description: Search query
+      responses:
+        "200":
+          description: Successfully retrieved listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Listing"
+
+  /listing-flags/{listing_id}:
+    post:
+      summary: Create a listing flag
+      tags:
+        - Listings
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: listing_id
+          required: true
+          schema:
+            type: integer
+          description: ID of the listing to flag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                description:
+                  type: string
+      responses:
+        "201":
+          description: Successfully created flag
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingFlag"
+
+  /listing-flags:
+    get:
+      summary: Get all listing flags
+      tags:
+        - Listings
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Items per page
+      responses:
+        "200":
+          description: Successfully retrieved flags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ListingFlag"
+
+  /listing-flags/{id}:
+    get:
+      summary: Get a specific listing flag
+      tags:
+        - Listings
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Flag ID
+      responses:
+        "200":
+          description: Successfully retrieved flag
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingFlag"
+        "404":
+          description: Flag not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /listings/{id}/listing-rating-summary:
+    get:
+      summary: Get listing rating summary
+      tags:
+        - Listings
+        - Reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Listing ID
+      responses:
+        "200":
+          description: Successfully retrieved rating summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  average_rating:
+                    type: number
+                  total_ratings:
+                    type: integer
+                  rating_distribution:
+                    type: object
+                    properties:
+                      1:
+                        type: integer
+                      2:
+                        type: integer
+                      3:
+                        type: integer
+                      4:
+                        type: integer
+                      5:
+                        type: integer
+
+  /listings/{id}/listing-ratings:
+    get:
+      summary: Get listing ratings
+      tags:
+        - Listings
+        - Reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Listing ID
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Items per page
+      responses:
+        "200":
+          description: Successfully retrieved ratings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                      current_page:
+                        type: integer
+                      last_page:
+                        type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ListingRating"
+
+  /listing-ratings/{id}:
+    get:
+      summary: Get a specific listing rating
+      tags:
+        - Listings
+        - Reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Rating ID
+      responses:
+        "200":
+          description: Successfully retrieved rating
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingRating"
+        "404":
+          description: Rating not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /listing-ratings:
+    post:
+      summary: Create a listing rating
+      tags:
+        - Listings
+        - Reviews
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - listing_id
+                - experience_rating
+              properties:
+                listing_id:
+                  type: integer
+                experience_rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                comment:
+                  type: string
+      responses:
+        "201":
+          description: Successfully created rating
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingRating"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /activities:
+    get:
+      summary: Get all activities
+      tags:
+        - Activities
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
+
+  /activities/slug/{slug}:
+    get:
+      summary: Get activity by slug
+      tags:
+        - Activities
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+          description: Activity slug
+      responses:
+        "200":
+          description: Successfully retrieved activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "404":
+          description: Activity not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /activities/{id}:
+    get:
+      summary: Get activity by ID
+      tags:
+        - Activities
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Activity ID
+      responses:
+        "200":
+          description: Successfully retrieved activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "404":
+          description: Activity not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /amenities:
+    get:
+      summary: Get all amenities
+      tags:
+        - Amenities
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved amenities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Amenity"
+
+  /amenities/slug/{slug}:
+    get:
+      summary: Get amenity by slug
+      tags:
+        - Amenities
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+          description: Amenity slug
+      responses:
+        "200":
+          description: Successfully retrieved amenity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Amenity"
+        "404":
+          description: Amenity not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /amenities/{id}:
+    get:
+      summary: Get amenity by ID
+      tags:
+        - Amenities
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Amenity ID
+      responses:
+        "200":
+          description: Successfully retrieved amenity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Amenity"
+        "404":
+          description: Amenity not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /regions:
+    get:
+      summary: Get all regions
+      tags:
+        - Regions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved regions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Region"
+
+  /regions/slug/{slug}:
+    get:
+      summary: Get region by slug
+      tags:
+        - Regions
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+          description: Region slug
+      responses:
+        "200":
+          description: Successfully retrieved region
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Region"
+        "404":
+          description: Region not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /regions/{id}:
+    get:
+      summary: Get region by ID
+      tags:
+        - Regions
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Region ID
+      responses:
+        "200":
+          description: Successfully retrieved region
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Region"
+        "404":
+          description: Region not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sessions:
+    get:
+      summary: Get all sessions
+      tags:
+        - Sessions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Session"
+    post:
+      summary: Create a new session
+      tags:
+        - Sessions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - listing_id
+                - start_time
+                - end_time
+              properties:
+                listing_id:
+                  type: integer
+                start_time:
+                  type: string
+                  format: date-time
+                end_time:
+                  type: string
+                  format: date-time
+      responses:
+        "201":
+          description: Successfully created session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sessions/active:
+    get:
+      summary: Get active session
+      tags:
+        - Sessions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved active session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /sessions/{id}:
+    get:
+      summary: Get session by ID
+      tags:
+        - Sessions
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Session ID
+      responses:
+        "200":
+          description: Successfully retrieved session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sessions/{id}/regenerate-pins:
+    post:
+      summary: Regenerate session pins
+      tags:
+        - Sessions
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Session ID
+      responses:
+        "200":
+          description: Successfully regenerated pins
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /sessions/extend:
+    post:
+      summary: Extend current session
+      tags:
+        - Sessions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - duration
+              properties:
+                duration:
+                  type: integer
+                  description: Duration in minutes
+      responses:
+        "200":
+          description: Successfully extended session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /sessions/end:
+    post:
+      summary: End current session
+      tags:
+        - Sessions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully ended session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
