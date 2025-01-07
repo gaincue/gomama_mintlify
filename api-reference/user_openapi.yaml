@@ -1287,6 +1287,58 @@ paths:
                   data:
                     $ref: "#/components/schemas/CoinBalance"
 
+  /me/coins/max-redeemable:
+    post:
+      summary: Get maximum redeemable coins for a checkout
+      tags:
+        - Coins
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - checkout_token
+              properties:
+                checkout_token:
+                  type: string
+                  description: The checkout token from Shopify
+      responses:
+        '200':
+          description: Successfully retrieved max redeemable coins
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      max_redeemable:
+                        type: integer
+                        description: Maximum number of coins that can be redeemed
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /me/coins/redeem:
     post:
       summary: Redeem coins
@@ -1301,25 +1353,59 @@ paths:
             schema:
               type: object
               required:
-                - amount
+                - points
+                - checkout_token
               properties:
-                amount:
+                points:
                   type: integer
-                  minimum: 1
+                  description: Number of points to redeem
+                checkout_token:
+                  type: string
+                  description: The checkout token from Shopify
       responses:
-        "200":
+        '200':
           description: Successfully redeemed coins
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                  message:
-                    type: string
                   data:
-                    $ref: "#/components/schemas/CoinBalance"
+                    type: object
+                    properties:
+                      discount_code:
+                        type: string
+                        description: Generated discount code for the redemption
+                      amount:
+                        type: number
+                        format: float
+                        description: Discount amount in currency
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                    enum:
+                      - redemption.in.process
+                      - points.insufficient
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /me/coins/cancel:
     post:
