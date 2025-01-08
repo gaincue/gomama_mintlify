@@ -1289,7 +1289,7 @@ paths:
 
   /me/coins/max-redeemable:
     post:
-      summary: Get maximum redeemable coins for a checkout
+      summary: Get maximum redeemable coins for a cart
       tags:
         - Coins
       security:
@@ -1301,14 +1301,14 @@ paths:
             schema:
               type: object
               required:
-                - checkout_token
+                - cart_id
               properties:
-                checkout_token:
+                cart_id:
                   type: string
-                  description: The checkout token from Shopify
+                  description: The ID of the cart to calculate max redeemable coins for
       responses:
         '200':
-          description: Successfully retrieved max redeemable coins
+          description: Successful response
           content:
             application/json:
               schema:
@@ -1317,23 +1317,29 @@ paths:
                   data:
                     type: object
                     properties:
+                      actual_max_redeemable:
+                        type: number
+                        description: The actual maximum points that can be redeemed based on customer's point balance and order total
+                      customer_point_on_hand:
+                        type: number
+                        description: Current points balance of the customer
                       max_redeemable:
-                        type: integer
-                        description: Maximum number of coins that can be redeemed
+                        type: number
+                        description: Maximum points that could be redeemed if customer had enough points
         '400':
-          description: Bad request
+          description: Bad request - User must have a Shopify profile
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '401':
-          description: Unauthorized
+          description: Unauthorized - User not authenticated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '500':
-          description: Server error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -1354,17 +1360,17 @@ paths:
               type: object
               required:
                 - points
-                - checkout_token
+                - cart_id
               properties:
                 points:
-                  type: integer
+                  type: number
                   description: Number of points to redeem
-                checkout_token:
+                cart_id:
                   type: string
-                  description: The checkout token from Shopify
+                  description: The ID of the cart to redeem coins for
       responses:
         '200':
-          description: Successfully redeemed coins
+          description: Successful response
           content:
             application/json:
               schema:
@@ -1376,10 +1382,6 @@ paths:
                       discount_code:
                         type: string
                         description: Generated discount code for the redemption
-                      amount:
-                        type: number
-                        format: float
-                        description: Discount amount in currency
         '400':
           description: Bad request
           content:
@@ -1391,17 +1393,17 @@ paths:
                     type: string
                   code:
                     type: string
-                    enum:
+                    enum: 
                       - redemption.in.process
                       - points.insufficient
         '401':
-          description: Unauthorized
+          description: Unauthorized - User not authenticated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '500':
-          description: Server error
+          description: Internal server error
           content:
             application/json:
               schema:
